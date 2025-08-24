@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Power Map Challenge - Advanced</title>
+  <style>
+    :root{
+      --bg: #f7fafc;
+      --panel: #ffffff;
+      --text: #0f172a;
+      --muted: #64748b;
+      --primary: #2563eb;
+      --primary-weak:#e0ecff;
+      --border:#e2e8f0;
+      --green:#16a34a;
+      --red:#dc2626;
+      --shadow: 0 10px 15px rgba(0,0,0,.06), 0 4px 6px rgba(0,0,0,.04);
+      --radius: 16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--text);
+      background: linear-gradient(180deg, #f8fafc, #ffffff);
+    }
+    .container{max-width:1200px;margin:0 auto;padding:24px}
+    .header{
+      display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:16px;
+    }
+    .title{font-size:28px;font-weight:800;letter-spacing:.2px}
+    .subtitle{color:var(--muted);font-size:14px}
+    .row{display:grid;grid-template-columns:1fr 2fr;gap:24px}
+    @media (max-width: 980px){ .row{grid-template-columns:1fr} }
+    .card{
+      background:var(--panel); border:1px solid var(--border);
+      border-radius:var(--radius); box-shadow:var(--shadow);
+    }
+    .card h3{margin:0 0 8px 0; font-size:14px; color:var(--muted)}
+    .card .section{padding:18px 20px; border-top:1px solid var(--border)}
+    .pad{padding:18px 20px}
+    .controls{display:flex;flex-wrap:wrap;gap:8px}
+    button,.btn{
+      appearance:none;border:1px solid var(--border); background:#fff;color:var(--text);
+      padding:10px 14px;border-radius:12px;cursor:pointer;transition:.2s; font-weight:600
+    }
+    button:hover,.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+    .btn-primary{background:var(--primary);border-color:var(--primary);color:#fff}
+    .btn-outline{background:#fff;border-color:var(--border)}
+    .btn-ghost{border-color:transparent;background:transparent}
+    .field{display:grid;gap:6px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    input[type='text']{
+      width:100%;padding:10px 12px;border-radius:12px;border:1px solid var(--border);outline:none
+    }
+    label{font-size:12px;color:var(--muted);font-weight:600}
+    .switch{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);user-select:none}
+    .switch input{appearance:none;width:36px;height:22px;border-radius:999px;position:relative;background:#e5e7eb;outline:none;transition:.2s;cursor:pointer;border:1px solid var(--border)}
+    .switch input:checked{background:var(--primary-weak);border-color:#b8ccff}
+    .switch input:before{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;top:1.5px;left:1.5px;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+    .switch input:checked:before{transform:translateX(14px)}
+    /* Stakeholder cards */
+    .pool{display:grid;gap:12px}
+    .stake-card{
+      background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px;cursor:grab;
+      transition:transform .15s ease, box-shadow .15s ease; box-shadow:0 2px 6px rgba(0,0,0,.04);
+    }
+    .stake-card:active{cursor:grabbing}
+    .stake-card:hover{transform:translateY(-2px); box-shadow:var(--shadow)}
+    .badge{display:inline-block;font-size:11px;font-weight:700;color:#1f2937;background:#eef2ff;border:1px solid #e0e7ff;border-radius:999px;padding:2px 8px;margin-right:8px}
+    .small{font-size:12px;color:var(--muted)}
+    .meta{display:grid;gap:6px;margin-top:8px}
+    .hidden-details .meta{display:none}
+    /* Map grid */
+    .map{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .drop{
+      min-height:220px;background:#fff;border:2px solid var(--border);border-radius:16px;padding:10px;transition:.2s; position:relative; overflow:hidden;
+    }
+    .drop h4{margin:0 0 6px 0;font-size:13px;color:#475569}
+    .drop.over{border-style:dashed;border-color:var(--primary); background: #f0f6ff}
+    .drop .zone{display:grid;gap:8px}
+    .drag-ghost{opacity:.6;transform:scale(.98)}
+    .row .map{height:100%}
+    /* Animations */
+    @keyframes fadeInUp{
+      from{opacity:0; transform:translateY(6px)} to{opacity:1; transform:translateY(0)}
+    }
+    .fade-in{animation:fadeInUp .25s ease}
+    /* Footer */
+    .footer{display:flex;justify-content:space-between;align-items:center;color:var(--muted);font-size:12px}
+    /* Export notice */
+    .print-hint{font-size:12px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <div class="title">The Power Map Challenge</div>
+        <div class="subtitle">Module 1: Power, Politics, and Organizational Objectives</div>
+      </div>
+      <div class="controls">
+        <button id="btnExport" class="btn btn-primary">Export PNG</button>
+        <button id="btnPrint" class="btn">Print / Save as PDF</button>
+        <label class="btn btn-outline" for="fileImport">Import JSON</label>
+        <input id="fileImport" type="file" accept="application/json" style="display:none"/>
+        <button id="btnExportJSON" class="btn">Export JSON</button>
+        <button id="btnReset" class="btn btn-outline">Reset</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Left: Stakeholder Pool & Setup -->
+      <div class="card">
+        <div class="pad grid2">
+          <div class="field">
+            <label>Team Name</label>
+            <input id="teamName" type="text" placeholder="Team A" />
+          </div>
+          <div class="field">
+            <label>Scenario</label>
+            <input id="scenario" type="text" placeholder="Company sustainability initiative to reduce carbon footprint by 30% in two years." />
+          </div>
+        </div>
+        <div class="section" style="display:flex;align-items:center;gap:12px;">
+          <label class="switch"><input id="toggleCompact" type="checkbox"/><span>Compact card view</span></label>
+        </div>
+        <div class="pad">
+          <h3>Stakeholder Cards</h3>
+          <div id="pool" class="pool"></div>
+          <div class="small" style="margin-top:6px">Drag cards into a quadrant on the Power Map.</div>
+        </div>
+      </div>
+
+      <!-- Right: Map -->
+      <div class="card pad">
+        <h3>Power Map</h3>
+        <div id="map" class="map">
+          <div class="drop" data-zone="hp_aligned">
+            <h4>HIGH POWER - Aligned (Supportive)</h4>
+            <div class="zone" id="hp_aligned"></div>
+          </div>
+          <div class="drop" data-zone="hp_misaligned">
+            <h4>HIGH POWER - Misaligned (Resistant)</h4>
+            <div class="zone" id="hp_misaligned"></div>
+          </div>
+          <div class="drop" data-zone="lp_aligned">
+            <h4>LOW POWER - Aligned (Low influence)</h4>
+            <div class="zone" id="lp_aligned"></div>
+          </div>
+          <div class="drop" data-zone="lp_misaligned">
+            <h4>LOW POWER - Misaligned (Low influence)</h4>
+            <div class="zone" id="lp_misaligned"></div>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Engagement Strategies</h3>
+          <div class="field">
+            <textarea id="strategies" placeholder="List 2-3 strategies to reduce political friction and improve alignment.
+• e.g., Co-create KPIs with Finance;
+• Launch pilot to de-risk Ops;
+• Communication plan led by Marketing." style="min-height:140px"></textarea>
+          </div>
+          <div class="print-hint">Tip: Reference roles’ resources and triggers when crafting strategies.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer" style="margin-top:16px">
+      <div>Saved locally in your browser. Use Export to share your board.</div>
+      <div>© Power Map Challenge - Module 1</div>
+    </div>
+  </div>
+
+  <script>
+    // ---- Data ----
+    const STAKEHOLDERS = [
+      { id:'ceo', role:'CEO', objectives:'Increase shareholder value, strategic growth.', triggers:'Resistance to ideas without ROI proof, dislikes delays.', resources:'Decision-making authority, board influence, budget power.' },
+      { id:'hrd', role:'HR Director', objectives:'Employee engagement, retention, fair workplace culture.', triggers:'Cuts to training/wellbeing, resistance to people-focused policies.', resources:'Access to workforce morale, training programs, culture influence.' },
+      { id:'ops', role:'Operations Manager', objectives:'Efficiency, cost reduction, smooth processes.', triggers:'New projects that disrupt operations or add workload.', resources:'Control over workflows, logistics, internal networks.' },
+      { id:'mkt', role:'Marketing Head', objectives:'Brand reputation, customer loyalty, growth.', triggers:'Budget limitations, lack of recognition.', resources:'Access to media, customer data, brand visibility.' },
+      { id:'fin', role:'Finance Manager', objectives:'Budget discipline, risk management, profitability.', triggers:'Overruns, spending without evidence of returns.', resources:'Control over funds, reporting, financial approvals.' },
+      { id:'union', role:'Union Representative', objectives:'Job security, fairness, worker rights.', triggers:'Downsizing, changes affecting worker safety or pay.', resources:'Worker support, collective bargaining, influence over morale.' },
+    ];
+    const ZONES = ['hp_aligned','hp_misaligned','lp_aligned','lp_misaligned'];
+
+    // ---- State (with localStorage) ----
+    const LS_KEY = 'pmc_adv_state_v1';
+    function loadState(){
+      try{ return JSON.parse(localStorage.getItem(LS_KEY)) || null }catch{ return null }
+    }
+    function saveState(state){
+      try{ localStorage.setItem(LS_KEY, JSON.stringify(state)) }catch{}
+    }
+    function defaultState(){
+      return {
+        teamName: 'Team A',
+        scenario: 'Company sustainability initiative to reduce carbon footprint by 30% in two years.',
+        strategies: '',
+        compact: false,
+        zones: { hp_aligned:[], hp_misaligned:[], lp_aligned:[], lp_misaligned:[], pool: STAKEHOLDERS.map(s=>s.id) }
+      }
+    }
+
+    let state = loadState() || defaultState();
+
+    // ---- DOM Refs ----
+    const pool = document.getElementById('pool');
+    const zones = {
+      hp_aligned: document.getElementById('hp_aligned'),
+      hp_misaligned: document.getElementById('hp_misaligned'),
+      lp_aligned: document.getElementById('lp_aligned'),
+      lp_misaligned: document.getElementById('lp_misaligned'),
+      pool
+    };
+    const teamInput = document.getElementById('teamName');
+    const scenarioInput = document.getElementById('scenario');
+    const strategiesInput = document.getElementById('strategies');
+    const compactToggle = document.getElementById('toggleCompact');
+
+    // ---- Render ----
+    function renderAll(){
+      teamInput.value = state.teamName;
+      scenarioInput.value = state.scenario;
+      strategiesInput.value = state.strategies;
+      compactToggle.checked = state.compact;
+      pool.classList.toggle('hidden-details', state.compact);
+
+      // Clear zones
+      Object.values(zones).forEach(el => { if(el) el.innerHTML = '' });
+
+      // Render pool cards first
+      for(const sid of state.zones.pool){
+        const s = STAKEHOLDERS.find(x=>x.id===sid);
+        zones.pool.appendChild(cardEl(s));
+      }
+      // Render zone cards
+      for(const zid of ZONES){
+        for(const sid of state.zones[zid]){
+          const s = STAKEHOLDERS.find(x=>x.id===sid);
+          zones[zid].appendChild(cardEl(s, true));
+        }
+      }
+    }
+
+    function cardEl(s, compactInZone=false){
+      const el = document.createElement('div');
+      el.className = 'stake-card fade-in';
+      el.draggable = true;
+      el.dataset.sid = s.id;
+      el.innerHTML = `
+        <div><span class="badge">Role</span><strong>${s.role}</strong></div>
+        <div class="meta ${compactInZone || state.compact ? 'hidden' : ''}">
+          <div class="small"><strong>Objectives:</strong> ${s.objectives}</div>
+          <div class="small"><strong>Triggers:</strong> ${s.triggers}</div>
+          <div class="small"><strong>Resources:</strong> ${s.resources}</div>
+        </div>
+      `;
+      // drag handlers
+      el.addEventListener('dragstart', (e)=>{
+        e.dataTransfer.setData('text/plain', s.id);
+        el.classList.add('drag-ghost');
+      });
+      el.addEventListener('dragend', ()=> el.classList.remove('drag-ghost'));
+      // click to toggle details (nice on touch devices)
+      el.addEventListener('click', ()=>{
+        const m = el.querySelector('.meta');
+        if(m){ m.classList.toggle('hidden'); }
+      });
+      return el;
+    }
+
+    // ---- DnD on zones ----
+    document.querySelectorAll('.drop').forEach(drop => {
+      drop.addEventListener('dragover', (e)=>{ e.preventDefault(); drop.classList.add('over') });
+      drop.addEventListener('dragleave', ()=> drop.classList.remove('over'));
+      drop.addEventListener('drop', (e)=>{
+        e.preventDefault();
+        drop.classList.remove('over');
+        const sid = e.dataTransfer.getData('text/plain');
+        if(!sid) return;
+        moveStakeholder(sid, drop.dataset.zone);
+      });
+    });
+    // Also allow dropping back to pool
+    pool.addEventListener('dragover', (e)=>{ e.preventDefault(); pool.classList.add('over') });
+    pool.addEventListener('dragleave', ()=> pool.classList.remove('over'));
+    pool.addEventListener('drop', (e)=>{
+      e.preventDefault(); pool.classList.remove('over');
+      const sid = e.dataTransfer.getData('text/plain'); if(!sid) return;
+      moveStakeholder(sid, 'pool');
+    });
+
+    function moveStakeholder(sid, target){
+      // remove from all
+      state.zones.pool = state.zones.pool.filter(id=>id!==sid);
+      for(const zid of ZONES){ state.zones[zid] = state.zones[zid].filter(id=>id!==sid); }
+      // add to target
+      if(target === 'pool'){ state.zones.pool.push(sid) }
+      else if(ZONES.includes(target)){ state.zones[target].push(sid) }
+      saveState(state);
+      renderAll();
+    }
+
+    // ---- Inputs ----
+    teamInput.addEventListener('input', ()=>{ state.teamName = teamInput.value; saveState(state) });
+    scenarioInput.addEventListener('input', ()=>{ state.scenario = scenarioInput.value; saveState(state) });
+    strategiesInput.addEventListener('input', ()=>{ state.strategies = strategiesInput.value; saveState(state) });
+    compactToggle.addEventListener('change', ()=>{
+      state.compact = compactToggle.checked; saveState(state); renderAll();
+    });
+
+    // ---- Import / Export JSON ----
+    document.getElementById('btnExportJSON').addEventListener('click', ()=>{
+      const data = {
+        teamName: state.teamName,
+        scenario: state.scenario,
+        strategies: state.strategies,
+        zones: state.zones,
+        compact: state.compact,
+        timestamp: new Date().toISOString()
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `PowerMap_${state.teamName.replace(/\\s+/g,'_')}.json`; a.click();
+      URL.revokeObjectURL(url);
+    });
+    document.getElementById('fileImport').addEventListener('change', (e)=>{
+      const file = e.target.files?.[0]; if(!file) return;
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        try{
+          const parsed = JSON.parse(String(reader.result));
+          if(parsed?.zones){
+            state.zones = parsed.zones;
+            state.teamName = parsed.teamName || state.teamName;
+            state.scenario = parsed.scenario || state.scenario;
+            state.strategies = parsed.strategies || state.strategies;
+            state.compact = !!parsed.compact;
+            saveState(state);
+            renderAll();
+          }else{
+            alert('Invalid file.'); 
+          }
+        }catch{ alert('Could not parse file.'); }
+      };
+      reader.readAsText(file);
+      // reset input so same file can be selected again
+      e.target.value = '';
+    });
+
+    // ---- Reset ----
+    document.getElementById('btnReset').addEventListener('click', ()=>{
+      if(confirm('Reset the board? This keeps your last export on disk but clears local progress.')){
+        state = defaultState(); saveState(state); renderAll();
+      }
+    });
+
+    // ---- Print / PDF ----
+    document.getElementById('btnPrint').addEventListener('click', ()=>{
+      window.print();
+    });
+
+    // ---- Export PNG (without external libraries) ----
+    // Uses SVG foreignObject to render a DOM snapshot to canvas.
+    document.getElementById('btnExport').addEventListener('click', ()=>{
+      const target = document.querySelector('.row'); // export the main content
+      const rect = target.getBoundingClientRect();
+      const width = Math.ceil(rect.width);
+      const height = Math.ceil(rect.height);
+
+      const xml = new XMLSerializer().serializeToString(target.cloneNode(true));
+      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${height}'>
+        <foreignObject width='100%' height='100%'>
+          <div xmlns='http://www.w3.org/1999/xhtml' style='font-family: Arial, sans-serif;'>${xml}</div>
+        </foreignObject>
+      </svg>`;
+      const svgBlob = new Blob([svg], {type:'image/svg+xml;charset=utf-8'});
+      const url = URL.createObjectURL(svgBlob);
+
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = width * 2; // scale for sharper image
+        canvas.height = height * 2;
+        const ctx = canvas.getContext('2d');
+        ctx.scale(2,2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0,0,width,height);
+        ctx.drawImage(img, 0, 0, width, height);
+        URL.revokeObjectURL(url);
+        canvas.toBlob((blob)=>{
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = `PowerMap_${(state.teamName||'Team').replace(/\\s+/g,'_')}.png`;
+          a.click();
+          setTimeout(()=> URL.revokeObjectURL(a.href), 2000);
+        }, 'image/png');
+      };
+      img.onerror = ()=>{
+        alert('Export failed in this browser. Try the Print / Save as PDF option.');
+        URL.revokeObjectURL(url);
+      };
+      img.src = url;
+    });
+
+    // ---- Initial render ----
+    renderAll();
+  </script>
+</body>
+</html>
