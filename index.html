@@ -102,11 +102,8 @@
         <div class="subtitle">Module 1: Power, Politics, and Organizational Objectives</div>
       </div>
       <div class="controls">
-        <button id="btnExport" class="btn btn-primary">Export PNG</button>
+    
         <button id="btnPrint" class="btn">Print / Save as PDF</button>
-        <label class="btn btn-outline" for="fileImport">Import JSON</label>
-        <input id="fileImport" type="file" accept="application/json" style="display:none"/>
-        <button id="btnExportJSON" class="btn">Export JSON</button>
         <button id="btnReset" class="btn btn-outline">Reset</button>
       </div>
     </div>
@@ -170,8 +167,7 @@
     </div>
 
     <div class="footer" style="margin-top:16px">
-      <div>Saved locally in your browser. Use Export to share your board.</div>
-      <div>© Power Map Challenge - Module 1</div>
+      <div>© Power Map Challenge</div>
     </div>
   </div>
 
@@ -314,44 +310,7 @@
     });
 
     // ---- Import / Export JSON ----
-    document.getElementById('btnExportJSON').addEventListener('click', ()=>{
-      const data = {
-        teamName: state.teamName,
-        scenario: state.scenario,
-        strategies: state.strategies,
-        zones: state.zones,
-        compact: state.compact,
-        timestamp: new Date().toISOString()
-      };
-      const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = `PowerMap_${state.teamName.replace(/\\s+/g,'_')}.json`; a.click();
-      URL.revokeObjectURL(url);
-    });
-    document.getElementById('fileImport').addEventListener('change', (e)=>{
-      const file = e.target.files?.[0]; if(!file) return;
-      const reader = new FileReader();
-      reader.onload = ()=>{
-        try{
-          const parsed = JSON.parse(String(reader.result));
-          if(parsed?.zones){
-            state.zones = parsed.zones;
-            state.teamName = parsed.teamName || state.teamName;
-            state.scenario = parsed.scenario || state.scenario;
-            state.strategies = parsed.strategies || state.strategies;
-            state.compact = !!parsed.compact;
-            saveState(state);
-            renderAll();
-          }else{
-            alert('Invalid file.'); 
-          }
-        }catch{ alert('Could not parse file.'); }
-      };
-      reader.readAsText(file);
-      // reset input so same file can be selected again
-      e.target.value = '';
-    });
+    
 
     // ---- Reset ----
     document.getElementById('btnReset').addEventListener('click', ()=>{
@@ -367,46 +326,6 @@
 
     // ---- Export PNG (without external libraries) ----
     // Uses SVG foreignObject to render a DOM snapshot to canvas.
-    document.getElementById('btnExport').addEventListener('click', ()=>{
-      const target = document.querySelector('.row'); // export the main content
-      const rect = target.getBoundingClientRect();
-      const width = Math.ceil(rect.width);
-      const height = Math.ceil(rect.height);
-
-      const xml = new XMLSerializer().serializeToString(target.cloneNode(true));
-      const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='${width}' height='${height}'>
-        <foreignObject width='100%' height='100%'>
-          <div xmlns='http://www.w3.org/1999/xhtml' style='font-family: Arial, sans-serif;'>${xml}</div>
-        </foreignObject>
-      </svg>`;
-      const svgBlob = new Blob([svg], {type:'image/svg+xml;charset=utf-8'});
-      const url = URL.createObjectURL(svgBlob);
-
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = width * 2; // scale for sharper image
-        canvas.height = height * 2;
-        const ctx = canvas.getContext('2d');
-        ctx.scale(2,2);
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(0,0,width,height);
-        ctx.drawImage(img, 0, 0, width, height);
-        URL.revokeObjectURL(url);
-        canvas.toBlob((blob)=>{
-          const a = document.createElement('a');
-          a.href = URL.createObjectURL(blob);
-          a.download = `PowerMap_${(state.teamName||'Team').replace(/\\s+/g,'_')}.png`;
-          a.click();
-          setTimeout(()=> URL.revokeObjectURL(a.href), 2000);
-        }, 'image/png');
-      };
-      img.onerror = ()=>{
-        alert('Export failed in this browser. Try the Print / Save as PDF option.');
-        URL.revokeObjectURL(url);
-      };
-      img.src = url;
-    });
 
     // ---- Initial render ----
     renderAll();
